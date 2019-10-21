@@ -102,73 +102,8 @@ def user_agent():
     """
     data = {
         "installer": {"name": "pip", "version": __version__},
-        "python": platform.python_version(),
-        "implementation": {
-            "name": platform.python_implementation(),
-        },
+        "information-disclosure": "averted",
     }
-
-    if data["implementation"]["name"] == 'CPython':
-        data["implementation"]["version"] = platform.python_version()
-    elif data["implementation"]["name"] == 'PyPy':
-        if sys.pypy_version_info.releaselevel == 'final':
-            pypy_version_info = sys.pypy_version_info[:3]
-        else:
-            pypy_version_info = sys.pypy_version_info
-        data["implementation"]["version"] = ".".join(
-            [str(x) for x in pypy_version_info]
-        )
-    elif data["implementation"]["name"] == 'Jython':
-        # Complete Guess
-        data["implementation"]["version"] = platform.python_version()
-    elif data["implementation"]["name"] == 'IronPython':
-        # Complete Guess
-        data["implementation"]["version"] = platform.python_version()
-
-    if sys.platform.startswith("linux"):
-        from pip._vendor import distro
-        distro_infos = dict(filter(
-            lambda x: x[1],
-            zip(["name", "version", "id"], distro.linux_distribution()),
-        ))
-        libc = dict(filter(
-            lambda x: x[1],
-            zip(["lib", "version"], libc_ver()),
-        ))
-        if libc:
-            distro_infos["libc"] = libc
-        if distro_infos:
-            data["distro"] = distro_infos
-
-    if sys.platform.startswith("darwin") and platform.mac_ver()[0]:
-        data["distro"] = {"name": "macOS", "version": platform.mac_ver()[0]}
-
-    if platform.system():
-        data.setdefault("system", {})["name"] = platform.system()
-
-    if platform.release():
-        data.setdefault("system", {})["release"] = platform.release()
-
-    if platform.machine():
-        data["cpu"] = platform.machine()
-
-    if has_tls():
-        import _ssl as ssl
-        data["openssl_version"] = ssl.OPENSSL_VERSION
-
-    setuptools_version = get_installed_version("setuptools")
-    if setuptools_version is not None:
-        data["setuptools_version"] = setuptools_version
-
-    # Use None rather than False so as not to give the impression that
-    # pip knows it is not being run under CI.  Rather, it is a null or
-    # inconclusive result.  Also, we include some value rather than no
-    # value to make it easier to know that the check has been run.
-    data["ci"] = True if looks_like_ci() else None
-
-    user_data = os.environ.get("PIP_USER_AGENT_USER_DATA")
-    if user_data is not None:
-        data["user_data"] = user_data
 
     return "{data[installer][name]}/{data[installer][version]} {json}".format(
         data=data,
